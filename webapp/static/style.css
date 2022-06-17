@@ -1,0 +1,25 @@
+.no-wrap-div {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.image-name {
+    margin-bottom: 10px;
+}
+
+.point-tag-name {
+    margin-left: 10px;
+}
+
+.tag-name {
+    margin: 0px 10px 0px 10px;
+}
+
+.size-mb {
+    margin: 5px 30px 0px 20px;
+    color: grey;
+}
+
+.box {
+    margin-bottom: 20px;
+}

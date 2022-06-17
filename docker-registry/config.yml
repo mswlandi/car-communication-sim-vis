@@ -1,0 +1,36 @@
+version: 0.1
+log:
+  level: debug
+  formatter: text
+  fields:
+    service: registry
+    environment: staging
+loglevel: debug
+storage:
+    cache:
+        layerinfo: inmemory
+    s3:
+        accesskey: v2QGwnPU47MnwimC
+        secretkey: NWxINSB1upuUG9HKpQwZMpqVORqWanHl
+        region: us-east-1
+        regionendpoint: http://172.17.0.2:9000
+        bucket: images
+        encrypt: false
+        secure: true
+        v4auth: true
+        chunksize: 5242880
+        rootdirectory: /
+    redirect:
+        disable: true
+    delete:
+        enabled: true
+    maintenance:
+        uploadpurging:
+            enabled: true
+            age: 168h
+            interval: 24h
+            dryrun: false
+        readonly:
+            enabled: false
+http:
+    addr: :5000

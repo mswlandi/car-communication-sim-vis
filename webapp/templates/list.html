@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Image Catalog</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <section class="section">
+            <div class="container">
+                <h1 class="title">
+                    Image Catalog
+                </h1>
+      
+                {% for image in imagelist %}
+                <form action="/" method="post" id="{{ image.name }}">
+                    <div class="box">
+
+                        <!-- name -->
+                        <p class="is-size-3 image-name">{{ image.name }}</p>
+                        <input type="hidden" name="image-name" value="{{ image.name }}">
+                        
+                        <!-- tag -->
+                        <div class="select">
+                            <select name="tag">
+                                {% for tag in image.tags %}
+                                <!-- <option value="{{ tag.name }}">{{ tag.name }} - {{ tag.size }} MB</option> -->
+                                <option value="{{ tag.name }}">{{ tag.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- node -->
+                        <div class="select">
+                            <select name="node">
+                                {% for node in nodelist %}
+                                <option value="{{node[0]}}">{{node[0]}} - {{node[1]}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button class="button" form="{{ image.name }}">Run Image</button>
+                    </div>
+                </form>
+                {% endfor %}
+            </div>
+        </section>
+    </body>
+</html>
