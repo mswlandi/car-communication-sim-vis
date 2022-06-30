@@ -1,0 +1,14 @@
+service:
+  type: NodePort
+  nodePort: 30000
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.default.svc.cluster.local:80
+
+persistence:
+  enabled: true

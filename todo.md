@@ -1,5 +1,9 @@
 # todo
 
+# optional
+- allow for stopping pods
+- allow for addition, edit and deletion of images
+  
 # when running in an actual cluster
 - see how to organize the local persistent volume (for now targets kind-control-plane)
 
@@ -10,8 +14,6 @@
 - calculate compressed image size?
 
 
-
-`docker run -d -p 9000:9000 --name minio -e "MINIO_ROOT_USER=admin" -e "MINIO_ROOT_PASSWORD=admin123" minio/minio server /export`
 
 `curl -s -I -H "Accept: application/vnd.docker.distribution.manifest.v2+json" http://localhost:5001/v2/helloworldpython/manifests/latest`
 (copy hash from Docker-Content-Digest)
