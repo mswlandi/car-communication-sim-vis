@@ -1,5 +1,5 @@
 # todo
-
+- study best message format
 # optional
 - allow for stopping pods
 - allow for addition, edit and deletion of images
