@@ -6,38 +6,51 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
-function loadGLTFModel(scene, glbPath, position, options) {
-    const { receiveShadow, castShadow } = options;
-    const [ lat, lng ] = position;
 
-    // var modelAsMercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat(
-    //     position,
-    //     0
-    // );
+// uses the longitude and latitude of the model to give its position in threejs coordinates
+// uses the center of the rendering layer as reference for translating, and scaling according to the latitude
+function getPositionFromLongLat(center, carData){
+    
+    var centerCoords = maplibregl.MercatorCoordinate.fromLngLat(center.LngLat, 0);
+    var objectCoords = maplibregl.MercatorCoordinate.fromLngLat(carData.LngLat, 0);
+    
+    var dx = centerCoords.x - objectCoords.x;
+    var dy = centerCoords.y - objectCoords.y;
+    
+    dx /= center.scale;
+    dy /= center.scale;
 
+    return new THREE.Vector3(-dx, 0, -dy);
+}
+
+
+// loads a GLTF 3D model of a car into the threejs scene
+function loadGLTFModel(scene, center, carData) {
     return new Promise((resolve, reject) => {
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/');
         const loader = new GLTFLoader();
         loader.setDRACOLoader(dracoLoader);
+
+        const position = getPositionFromLongLat(center, carData);
+
         loader.load(
-            glbPath,
+            "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/ferrari.glb",
             (gltf) => {
                 const obj = gltf.scene;
-                obj.position.y = 0;
-                obj.position.x = lat;
-                obj.position.z = lng;
-                obj.receiveShadow = receiveShadow;
-                obj.castShadow = castShadow;
+                obj.position.set(position.x, position.y, position.z);
+                obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
+                obj.receiveShadow = false;
+                obj.castShadow = false;
                 scene.add(obj);
 
                 obj.traverse(function(child) {
                     if(child.isMesh) {
-                        child.castShadow = castShadow;
-                        child.receiveShadow = receiveShadow;
+                        child.castShadow = false;
+                        child.receiveShadow = false;
                     }
                 });
-                
+
                 resolve(obj);
             },
             undefined,
@@ -49,15 +62,83 @@ function loadGLTFModel(scene, glbPath, position, options) {
     });
 }
 
+
 export default function Map(props) {
     const mapContainer = useRef(null);
-    const [lat] = useState(48.744715);
-    const [lng] = useState(9.1066383);
+    const [carData2, setCarData2] = useState({
+        id: "second_car",
+        LngLat: [9.106607, 48.744746],
+        altitude: 0,
+        rotateX: 0,
+        rotateY: 3 * Math.PI / 8, // Actual desired car rotation
+        rotateZ: 0
+    });
     const [zoom] = useState(21);
     const [API_KEY] = useState('cqvAKHMBJexanBFc1owH ');
+    
+    const [lat] = useState(48.744715);
+    const [lng] = useState(9.1066383);
+    const [centerMercator] = useState(maplibregl.MercatorCoordinate.fromLngLat([lng, lat]));
+    const [center] = useState({
+        LngLat: [lng, lat],
+        translateX: centerMercator.x,
+        translateY: centerMercator.y,
+        translateZ: centerMercator.z,
+        rotateX: Math.PI / 2,
+        rotateY: 0,
+        rotateZ: 0,
+        scale: centerMercator.meterInMercatorCoordinateUnits()
+    });
 
+    const [carDataList, setCarDataList] = useState([]);
+    const [scene, setScene] = useState(new THREE.Scene());
+
+    // updates information about car, if car doesn't exist in the car data array, adds it to the array.
+    // will make a bunch of stuff even if no actual information about the car has changed
+    // TODO: check if changes were made
+    function updateCarData(carData) {
+        if (!carData.id) {
+            console.log("requested car data update doesn't provide car ID");
+            return false;
+        }
+
+        setCarDataList((oldList => {
+            const updatedCarDataList = [...oldList];
+            var carIndexInList = oldList.findIndex((value, index, array) => {return carData.id == value.id});
+
+            if (carIndexInList == -1) {
+                console.log("ID not found in car list. Adding car to the world");
+
+                // creates 3D model
+                loadGLTFModel(scene, center, carData)
+                    .then((object) => {
+                        console.log("new car model loaded");
+                        carData.obj = object;
+                        updatedCarDataList.push(carData);
+                    });
+            } else {
+                const position = getPositionFromLongLat(center, carData);
+                carData.obj.position.set(position.x, position.y, position.z);
+                carData.obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
+
+                console.log(`car data for car ID ${carData.id} updated.`);
+                updatedCarDataList.splice(carIndexInList, 1, carData);
+            }
+            return updatedCarDataList;
+        }));
+
+        return true;
+    }
+
+    // runs on carDataList updates
+    // useEffect(() => {
+    //     if (carDataList.length != 0) {
+    //         console.log(carDataList);
+    //     }
+    // }, [carDataList]);
+
+    // map initialization
     useEffect(() => {
-        // stops map from intializing more than once
         if (props.map.current) 
             return;
         
@@ -67,73 +148,52 @@ export default function Map(props) {
             center: [lng, lat],
             zoom: zoom,
             pitch: 60,
+            maxPitch: 85,
             antialias: true
         });
 
-        // parameters to ensure the model is georeferenced correctly on the map
-        var modelOrigin = [9.106596, 48.744459];
-        // var modelAltitude = 456;
-        var modelAltitude = 0;
-        var modelRotate = [Math.PI / 2, 5.5 * Math.PI / 8, 0];
-
-        var modelAsMercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat(
-            modelOrigin,
-            modelAltitude
-        );
-        
+        // ----------- 1ST MODEL DATA ---------------------
         // transformation parameters to position, rotate and scale the 3D model onto the map
-        var modelTransform = {
-            translateX: modelAsMercatorCoordinate.x,
-            translateY: modelAsMercatorCoordinate.y,
-            translateZ: modelAsMercatorCoordinate.z,
-            rotateX: modelRotate[0],
-            rotateY: modelRotate[1],
-            rotateZ: modelRotate[2],
-            /* Since our 3D model is in real world meters, a scale transform needs to be
-            * applied since the CustomLayerInterface expects units in MercatorCoordinates.
-            */
-            scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+        var carData = {
+            id: "first_car",
+            LngLat: [9.106596, 48.744459],
+            altitude: 0,
+            rotateX: 0,
+            rotateY: 5.5 * Math.PI / 8, // Actual desired car rotation
+            rotateZ: 0
         };
+        // ------------------------------------------------
 
-        // create a custom style layer to implement the WebGL content
+        // create a custom style layer for the map to implement the threejs WebGL content
         var customCarLayer = {
             id: 'threedee',
             type: 'custom',
             renderingMode: '3d',
 
+            addLights: function (scene) {
+                // create two three.js lights to illuminate the model
+                var directionalLight = new THREE.DirectionalLight(0xffffff);
+                directionalLight.position.set(0, -70, 100).normalize();
+                scene.add(directionalLight);
+
+                var directionalLight2 = new THREE.DirectionalLight(0xffffff);
+                directionalLight2.position.set(0, 70, 100).normalize();
+                scene.add(directionalLight2);
+
+                return scene;
+            },
+
             // method called when the layer is added to the map
             // https://maplibre.org/maplibre-gl-js-docs/api/properties/#styleimageinterface#onadd
             onAdd: function (map, gl) {
                 this.camera = new THREE.Camera();
-                this.scene = new THREE.Scene();
-
-                // create two three.js lights to illuminate the model
-                var directionalLight = new THREE.DirectionalLight(0xffffff);
-                directionalLight.position.set(0, -70, 100).normalize();
-                this.scene.add(directionalLight);
-
-                var directionalLight2 = new THREE.DirectionalLight(0xffffff);
-                directionalLight2.position.set(0, 70, 100).normalize();
-                this.scene.add(directionalLight2);
-
-                // use the GLTF loader to add the 3D model to the three.js scene
-                loadGLTFModel(this.scene, "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/ferrari.glb", [0,0], {
-                    receiveShadow: false,
-                    castShadow: false
-                }).then(() => {
-                    console.log("model loaded");
+                setScene((oldScene) => {
+                    this.addLights(oldScene);
                 });
-
-                // var secondModelOrigin = [48.744746, 9.106607];
-                // // use the GLTF loader to add the 3D model to the three.js scene
-                // loadGLTFModel(this.scene, "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/ferrari.glb", secondModelOrigin, {
-                //     receiveShadow: false,
-                //     castShadow: false
-                // }).then(() => {
-                //     console.log("model 2 loaded");
-                // });
-
                 this.map = map;
+                
+                updateCarData(carData);
+                updateCarData(carData2);
 
                 // use the MapLibre GL JS map canvas for three.js
                 this.renderer = new THREE.WebGLRenderer({
@@ -148,40 +208,23 @@ export default function Map(props) {
             // method fired on each animation frame
             // https://maplibre.org/maplibre-gl-js-docs/api/map/#map.event:render
             render: function (gl, matrix) {
-                var rotationX = new THREE.Matrix4().makeRotationAxis(
-                    new THREE.Vector3(1, 0, 0),
-                    modelTransform.rotateX
-                );
-                var rotationY = new THREE.Matrix4().makeRotationAxis(
-                    new THREE.Vector3(0, 1, 0),
-                    modelTransform.rotateY
-                );
-                var rotationZ = new THREE.Matrix4().makeRotationAxis(
-                    new THREE.Vector3(0, 0, 1),
-                    modelTransform.rotateZ
-                );
+                var rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), center.rotateX);
+                var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 1, 0), center.rotateY);
+                var rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), center.rotateZ);
 
                 var m = new THREE.Matrix4().fromArray(matrix);
-                var l = new THREE.Matrix4()
-                    .makeTranslation(
-                        modelTransform.translateX,
-                        modelTransform.translateY,
-                        modelTransform.translateZ
-                    )
-                    .scale(
-                        new THREE.Vector3(
-                            modelTransform.scale,
-                            -modelTransform.scale,
-                            modelTransform.scale
-                        )
-                    )
-                    .multiply(rotationX)
-                    .multiply(rotationY)
-                    .multiply(rotationZ);
+                
+                var l = new THREE.Matrix4().makeTranslation(center.translateX, center.translateY, center.translateZ)
+                .scale(new THREE.Vector3(center.scale, -center.scale, center.scale))
+                .multiply(rotationX)
+                .multiply(rotationY)
+                .multiply(rotationZ);
 
+                this.camera.projectionMatrix.elements = matrix;
                 this.camera.projectionMatrix = m.multiply(l);
+
                 this.renderer.state.reset();
-                this.renderer.render(this.scene, this.camera);
+                this.renderer.render(scene, this.camera);
                 this.map.triggerRepaint();
             }
         };
@@ -193,7 +236,8 @@ export default function Map(props) {
     });
 
     const animateCar = function () {
-        console.log("ehrm");
+        var newCarData = {...carData2, LngLat: [9.106625, 48.744658]};
+        updateCarData(newCarData);
     };
 
     return (
@@ -201,6 +245,7 @@ export default function Map(props) {
         <div ref={mapContainer}
             className="map"/>
         <button onClick={() => animateCar()}>animate</button>
+        <button onClick={() => console.log(carDataList)}>print</button>
     </div>
     );
 }
