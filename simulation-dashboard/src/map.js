@@ -65,7 +65,7 @@ function loadGLTFModel(scene, center, carData) {
 
 export default function Map(props) {
     const mapContainer = useRef(null);
-    const [carData2, setCarData2] = useState({
+    const [carData2] = useState({
         id: "second_car",
         LngLat: [9.106607, 48.744746],
         altitude: 0,
@@ -104,9 +104,9 @@ export default function Map(props) {
 
         setCarDataList((oldList => {
             const updatedCarDataList = [...oldList];
-            var carIndexInList = oldList.findIndex((value, index, array) => {return carData.id == value.id});
+            var carIndexInList = oldList.findIndex((value, index, array) => {return carData.id === value.id});
 
-            if (carIndexInList == -1) {
+            if (carIndexInList === -1) {
                 console.log("ID not found in car list. Adding car to the world");
 
                 // creates 3D model
@@ -154,7 +154,7 @@ export default function Map(props) {
 
         // ----------- 1ST MODEL DATA ---------------------
         // transformation parameters to position, rotate and scale the 3D model onto the map
-        var carData = {
+        var carData1 = {
             id: "first_car",
             LngLat: [9.106596, 48.744459],
             altitude: 0,
@@ -192,7 +192,7 @@ export default function Map(props) {
                 });
                 this.map = map;
                 
-                updateCarData(carData);
+                updateCarData(carData1);
                 updateCarData(carData2);
 
                 // use the MapLibre GL JS map canvas for three.js
