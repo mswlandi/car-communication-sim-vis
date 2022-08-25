@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import time
 import messaging
 from os import getenv
+from math import cos, asin, sin, atan2, degrees, radians
 
 def on_connect(client, userdata, flags, rc):
     print(f'Connected with result code {rc}')
@@ -16,18 +17,50 @@ client.connect(mqtt_host_ip, mqtt_host_port, 60)
 
 time.sleep(3)
 
-carInfo = messaging.CarInfo((0,0), (100,0), (-2, 2))
+# origin and destination in [lng, lat], in degrees
+def calcNewPosition(origin, destination, speed):
+    earth_radius = 6378137 # in meters
+
+    lon0 = radians(origin[0])
+    lat0 = radians(origin[1])
+
+    lon1 = radians(destination[0])
+    lat1 = radians(destination[1])
+
+    y = sin(lon1-lon0) * cos(lat1)
+    x = cos(lat0)*sin(lat1) - sin(lat0)*cos(lat1)*cos(lon1-lon0)
+    angle = atan2(y, x)
+
+    lat = asin(sin(lat0)*cos(speed/earth_radius) + cos(lat0)*sin(speed/earth_radius)*cos(angle))
+    lon = lon0 + atan2(sin(angle)*sin(speed/earth_radius)*cos(lat0), cos(speed/earth_radius)-sin(lat0)*sin(lat))
+
+    return [degrees(lon), degrees(lat)]
+
+origin = [9.106639, 48.744466]
+destination = [9.105249, 48.743953]
+# origin = [-73.987188, 40.734203] # new york
+# destination = [66.945446, 39.810715] # uzbekistan
+# speed = 10 # in meters per second
+speed = 200 * 1000 # in meters per second
+
+carInfo = messaging.CarInfo(origin, [100,0], [-2, 2])
 message = messaging.Message("updateCarInfo", carInfo)
 messageEncoded = messaging.encodeMessage(message)
 
+print(f"{origin[1]},{origin[0]},red,marker,\"origin\"")
+print(f"{destination[1]},{destination[0]},red,marker,\"destination\"")
+
 for i in range(20):
-    carInfo.speed = (carInfo.speed[0] + carInfo.acceleration[0], carInfo.speed[1] + carInfo.acceleration[1])
-    carInfo.position = (carInfo.position[0] + carInfo.speed[0], carInfo.position[1] + carInfo.speed[1])
+    # carInfo.speed = [carInfo.speed[0] + carInfo.acceleration[0], carInfo.speed[1] + carInfo.acceleration[1]]
+    # carInfo.position = [carInfo.position[0] + carInfo.speed[0], carInfo.position[1] + carInfo.speed[1]]
+    carInfo.position = calcNewPosition(carInfo.position, destination, speed)
     message.updateData(carInfo)
     messageEncoded = messaging.encodeMessage(message)
 
+    print(f"{carInfo.position[1]},{carInfo.position[0]},blue,marker,\"{i}\"")
+
     client.publish('carInfo/update', payload=messageEncoded, qos=1, retain=False)
-    print(f'sent carInfo update to carInfo/update')
-    time.sleep(1)
+    # print(f'sent carInfo update to carInfo/update')
+    # time.sleep(1)
 
 client.loop_forever()

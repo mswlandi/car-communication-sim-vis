@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { useSubscription } from 'mqtt-react-hooks';
 
 
 // uses the longitude and latitude of the model to give its position in threejs coordinates
@@ -75,6 +76,10 @@ export default function Map(props) {
     });
     const [zoom] = useState(21);
     const [API_KEY] = useState('cqvAKHMBJexanBFc1owH ');
+
+    const { message } = useSubscription([
+        'carInfo/update',
+    ]);
     
     const [lat] = useState(48.744715);
     const [lng] = useState(9.1066383);
@@ -246,6 +251,7 @@ export default function Map(props) {
             className="map"/>
         <button onClick={() => animateCar()}>animate</button>
         <button onClick={() => console.log(carDataList)}>print</button>
+        <div>{`topic:${message ? message.topic : 'empty'} - message: ${message ? message.message : 'empty'}`}</div>
     </div>
     );
 }
