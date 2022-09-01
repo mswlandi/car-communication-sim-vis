@@ -109,33 +109,38 @@ export default function Map(props) {
             return false;
         }
 
+        var carIndexInList = carDataList.findIndex((value, index, array) => {return carData.id === value.id});
+        
+        if (carIndexInList === -1) {
+            console.log("ID not found in car list. Adding car to the world");
+            
+            // creates 3D model
+            loadGLTFModel(scene, center, carData)
+            .then((object) => {
+                console.log("new car model loaded");
+                    carData.obj = object;
+                });
+        } else {
+            const position = getPositionFromLongLat(center, carData);
+            
+            const obj = carDataList[carIndexInList].obj;
+            
+            obj.position.set(position.x, position.y, position.z);
+            obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
+            
+            carData.obj = obj;
+        }
+
         setCarDataList((oldList => {
             const updatedCarDataList = [...oldList];
-            var carIndexInList = oldList.findIndex((value, index, array) => {return carData.id === value.id});
-
+            
             if (carIndexInList === -1) {
-                console.log("ID not found in car list. Adding car to the world");
-
-                // creates 3D model
-                loadGLTFModel(scene, center, carData)
-                    .then((object) => {
-                        console.log("new car model loaded");
-                        carData.obj = object;
-                        updatedCarDataList.push(carData);
-                    });
+                updatedCarDataList.push(carData);
             } else {
-                const position = getPositionFromLongLat(center, carData);
-
-                const obj = updatedCarDataList[carIndexInList].obj;
-
-                obj.position.set(position.x, position.y, position.z);
-                obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
-
-                carData.obj = obj;
-
                 // console.log(`car data for car ID ${carData.id} updated.`);
                 updatedCarDataList.splice(carIndexInList, 1, carData);
             }
+
             return updatedCarDataList;
         }));
 
@@ -145,7 +150,7 @@ export default function Map(props) {
     // runs on message updates
     useEffect(() => {
         if (message) {
-            if (message.topic == "carInfo/update") {
+            if (message.topic === "carInfo/update") {
                 const carData = JSON.parse(message.message);
                 updateCarData(carData);
             }
@@ -207,8 +212,8 @@ export default function Map(props) {
                 });
                 this.map = map;
                 
-                updateCarData(carData2);
                 updateCarData(carData1);
+                updateCarData(carData2);
 
                 // use the MapLibre GL JS map canvas for three.js
                 this.renderer = new THREE.WebGLRenderer({
