@@ -36,31 +36,28 @@ def calcNewPosition(origin, destination, speed):
 
     return [degrees(lon), degrees(lat)]
 
-origin = [9.106639, 48.744466]
-destination = [9.105249, 48.743953]
 # origin = [-73.987188, 40.734203] # new york
 # destination = [66.945446, 39.810715] # uzbekistan
-# speed = 10 # in meters per second
-speed = 200 * 1000 # in meters per second
+# speed = 200 * 1000
+speed = 0.5
+origin = [9.106639, 48.744466]
+destination = [9.105249, 48.743953]
 
-carInfo = messaging.CarInfo(origin, [100,0], [-2, 2])
-message = messaging.Message("updateCarInfo", carInfo)
-messageEncoded = messaging.encodeMessage(message)
+carInfo = messaging.exampleCarData
+carInfo["LngLat"] = origin
+messageEncoded = messaging.encodeMessage(carInfo)
 
 print(f"{origin[1]},{origin[0]},red,marker,\"origin\"")
 print(f"{destination[1]},{destination[0]},red,marker,\"destination\"")
 
-for i in range(20):
-    # carInfo.speed = [carInfo.speed[0] + carInfo.acceleration[0], carInfo.speed[1] + carInfo.acceleration[1]]
-    # carInfo.position = [carInfo.position[0] + carInfo.speed[0], carInfo.position[1] + carInfo.speed[1]]
-    carInfo.position = calcNewPosition(carInfo.position, destination, speed)
-    message.updateData(carInfo)
-    messageEncoded = messaging.encodeMessage(message)
-
-    print(f"{carInfo.position[1]},{carInfo.position[0]},blue,marker,\"{i}\"")
+for i in range(100):
+    carInfo["LngLat"] = calcNewPosition(carInfo["LngLat"], destination, speed)
+    messageEncoded = messaging.encodeMessage(carInfo)
 
     client.publish('carInfo/update', payload=messageEncoded, qos=1, retain=False)
-    # print(f'sent carInfo update to carInfo/update')
-    # time.sleep(1)
+    print(f'sent carInfo update to carInfo/update')
+
+    print(f"{carInfo['LngLat'][0]},{carInfo['LngLat'][1]}")
+    time.sleep(0.2)
 
 client.loop_forever()

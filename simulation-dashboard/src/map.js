@@ -100,7 +100,9 @@ export default function Map(props) {
 
     // updates information about car, if car doesn't exist in the car data array, adds it to the array.
     // will make a bunch of stuff even if no actual information about the car has changed
-    // TODO: check if changes were made
+    // TODO:
+    // - check if changes were made
+    // - only change present fields
     function updateCarData(carData) {
         if (!carData.id) {
             console.log("requested car data update doesn't provide car ID");
@@ -123,10 +125,15 @@ export default function Map(props) {
                     });
             } else {
                 const position = getPositionFromLongLat(center, carData);
-                carData.obj.position.set(position.x, position.y, position.z);
-                carData.obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
 
-                console.log(`car data for car ID ${carData.id} updated.`);
+                const obj = updatedCarDataList[carIndexInList].obj;
+
+                obj.position.set(position.x, position.y, position.z);
+                obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
+
+                carData.obj = obj;
+
+                // console.log(`car data for car ID ${carData.id} updated.`);
                 updatedCarDataList.splice(carIndexInList, 1, carData);
             }
             return updatedCarDataList;
@@ -135,12 +142,15 @@ export default function Map(props) {
         return true;
     }
 
-    // runs on carDataList updates
-    // useEffect(() => {
-    //     if (carDataList.length != 0) {
-    //         console.log(carDataList);
-    //     }
-    // }, [carDataList]);
+    // runs on message updates
+    useEffect(() => {
+        if (message) {
+            if (message.topic == "carInfo/update") {
+                const carData = JSON.parse(message.message);
+                updateCarData(carData);
+            }
+        }
+    }, [message]);
 
     // map initialization
     useEffect(() => {
@@ -197,8 +207,8 @@ export default function Map(props) {
                 });
                 this.map = map;
                 
-                updateCarData(carData1);
                 updateCarData(carData2);
+                updateCarData(carData1);
 
                 // use the MapLibre GL JS map canvas for three.js
                 this.renderer = new THREE.WebGLRenderer({

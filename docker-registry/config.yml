@@ -10,8 +10,8 @@ storage:
     cache:
         layerinfo: inmemory
     s3:
-        accesskey: v2QGwnPU47MnwimC
-        secretkey: NWxINSB1upuUG9HKpQwZMpqVORqWanHl
+        accesskey: lncDNPbMyfJt26RB
+        secretkey: 6gYOPHopx5hFpQxOD1g32vVIXp6z7FuY
         region: us-east-1
         regionendpoint: http://172.17.0.2:9000
         bucket: images

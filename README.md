@@ -2,7 +2,7 @@
 
 ## setup
 
-- install [kind](https://kind.sigs.k8s.io/) and [helm](https://helm.sh/docs/intro/install/)
+- install [docker](https://docs.docker.com/get-docker/) [kind](https://kind.sigs.k8s.io/), [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [helm](https://helm.sh/docs/intro/install/)
 
 - copy `.env.example` to a new file called `.env`. fill the variables accordingly.
 - run `bash ./minio.sh` to run minio

@@ -11,11 +11,11 @@ def on_connect(client, userdata, flags, rc):
 # The callback function for received message
 def on_message(client, userdata, msg):
     message = messaging.decodeMessage(msg.payload)
-    print(f'{message.timestamp} {message.type}')
+    print(f'{message["timestamp"]} {message["type"]}')
     if (msg.topic == "carInfo/update"):
-        print(f'    position     {message.data.position}')
-        print(f'    speed        {message.data.speed}')
-        print(f'    acceleration {message.data.acceleration}')
+        print(f'    position     {message["position"]}')
+        print(f'    speed        {message["speed"]}')
+        print(f'    acceleration {message["acceleration"]}')
 
 
 mqtt_host_ip = getenv('clusterIP')
