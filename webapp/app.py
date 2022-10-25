@@ -1,6 +1,13 @@
 from flask import Flask, render_template, request
-import docker_registry
-import k8sapi
+
+import os
+import sys
+
+# make parent directory available to import k8sapi
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+import k8sapi.registry as docker_registry
+import k8sapi.api as k8sapi
 
 app = Flask(__name__)
 k8sapi.load_api()
