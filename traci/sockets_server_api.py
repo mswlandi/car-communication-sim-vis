@@ -8,10 +8,16 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
         # we can now use e.g. readline() instead of raw recv() calls
         self.data = self.rfile.readline().strip()
         print(f"{self.client_address[0]} wrote:")
-        print(self.data)
-        # Likewise, self.wfile is a file-like object used to write back
-        # to the client
-        self.wfile.write(self.data.upper())
+        print(self.data.decode("utf-8"))
+
+        this_car_ID = self.data.decode("utf-8")
+
+        for i in range(10):
+            # Likewise, self.wfile is a file-like object used to write back
+            # to the client
+            self.wfile.write(bytes(f"take this number hihi {i}", "utf-8"))
+            self.data = self.rfile.readline().strip().decode("utf-8")
+            print(f"    {this_car_ID} wrote: {self.data}")
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -24,6 +30,10 @@ class Server():
     def __init__(self, host, port):
         self.ip = host
         self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
+
+        # override socket connection on address if it is busy
+        self.server.allow_reuse_address = True
+
         # get port from here in the case that server is initialized with port 0 (arbitrary port)
         ip, self.port = self.server.server_address
 
