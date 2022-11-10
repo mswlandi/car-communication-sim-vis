@@ -31,7 +31,7 @@ def create_pod(
 
     metadata = V1ObjectMeta(name=name)
     container = V1Container(name='container', image=f'{registry_address}:{registry_port}/{image}:{tag}', args=args, env=envs_formatted)
-    pod_spec = V1PodSpec(containers=[container], node_name=node_name, restart_policy="OnFailure")
+    pod_spec = V1PodSpec(containers=[container], node_name=node_name, restart_policy="Never")
     pod_body = V1Pod(metadata=metadata, spec=pod_spec, kind='Pod', api_version='v1')
     pod = k8sapi.create_namespaced_pod(namespace=namespace, body=pod_body)
 

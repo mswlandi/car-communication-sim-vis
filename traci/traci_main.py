@@ -4,7 +4,6 @@ import sockets_server_api
 import env
 import signal
 import sys
-from car_communication import messaging
 
 # make parent directory available to import k8sapi
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
@@ -54,6 +53,11 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+# write to socket and receive response (can be ignored) on a loop
+def handle_CC_socket_connection(stream_request_handler, car_ID):
+    return
+
+
 # ----- main part -----
 if __name__ == '__main__':
     sumoBinary = "/home/marcos/Proj/sumo/bin/sumo" #-gui
@@ -100,7 +104,8 @@ if __name__ == '__main__':
                         envs={
                             "SERVER_ADDRESS": "dockerhost",
                             "SERVER_PORT": "9999",
-                            "POD_NAME": new_pod_name
+                            "POD_NAME": new_pod_name,
+                            "PYTHONUNBUFFERED": "1"
                         },
                         namespace=env.k8sapi_namespace)
 

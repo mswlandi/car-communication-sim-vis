@@ -1,5 +1,7 @@
 import threading
 import socketserver
+import time
+from car_communication import messaging
 
 class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 
@@ -13,11 +15,17 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
         this_car_ID = self.data.decode("utf-8")
 
         for i in range(10):
-            # Likewise, self.wfile is a file-like object used to write back
-            # to the client
-            self.wfile.write(bytes(f"take this number hihi {i}", "utf-8"))
+            carData = messaging.exampleCarData
+            carData['id'] = this_car_ID
+            messageEncoded = messaging.encodeMessage(carData, messaging.messageType.updateCarInfo)
+            self.wfile.write(bytes(messageEncoded, "utf-8"))
             self.data = self.rfile.readline().strip().decode("utf-8")
             print(f"    {this_car_ID} wrote: {self.data}")
+            time.sleep(1)
+        
+        messageEncoded = messaging.encodeMessage({"data": "close connection"}, messaging.messageType.closeConnection)
+        self.wfile.write(bytes(messageEncoded, "utf-8"))
+        print(f"closed connection with {this_car_ID}")
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -29,10 +37,11 @@ class Server():
     # returns the server thread
     def __init__(self, host, port):
         self.ip = host
-        self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
 
         # override socket connection on address if it is busy
-        self.server.allow_reuse_address = True
+        ThreadedTCPServer.allow_reuse_address = True
+
+        self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
 
         # get port from here in the case that server is initialized with port 0 (arbitrary port)
         ip, self.port = self.server.server_address

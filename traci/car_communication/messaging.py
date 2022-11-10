@@ -1,12 +1,14 @@
 import jsonpickle
 from datetime import datetime
 from math import pi
+from enum import Enum, auto
 
-class CarInfo():
-    def __init__(self, position, speed, acceleration):
-        self.position = position
-        self.speed = speed
-        self.acceleration = acceleration
+
+class messageType(Enum):
+    updateCarInfo = auto() # send new car data
+    closeConnection = auto() # last message before closing socket connection
+    test = auto() # test the socket connection
+
 
 exampleCarData = {
     "id": "first_car",
@@ -17,26 +19,22 @@ exampleCarData = {
     "rotateZ": 0
 }
 
-class Message():
-    def __init__(self, type, data):
-        '''
-        Parameters:
-            type: "updateCarInfo"
-            data: CarInfo object if type == "updateCarInfo"
-        '''
-        self.timestamp = datetime.timestamp(datetime.now())
-        self.type = type
-        self.data = data
-    
-    def updateData(self, data):
-        '''
-        Updates data and the timestamp
-        '''
-        self.data = data
-        self.timestamp = datetime.timestamp(datetime.now())
 
-def encodeMessage(message):
-    message["type"] = "updateCarInfo"
+def encodeMessage(message, type=messageType.updateCarInfo):
+    '''
+    "type": messageType
+    message contents:
+        if "type" == messageType.updateCarInfo: send new car data
+            "id": str, unique ID
+            "LngLat": list[float], longitude and latitude
+            "altitude": float, altitude in meters
+            "rotateX": float, rotation in X axis (radians)
+            "rotateY": float, rotation in Y axis (radians)
+            "rotateZ": float, rotation in Z axis (radians)
+        if "type" == messageType.closeConnection: last message before closing socket connection
+            anything, contents are ignored
+    '''
+    message["type"] = type
     message["timestamp"] = datetime.timestamp(datetime.now())
     return jsonpickle.encode(message)
 
