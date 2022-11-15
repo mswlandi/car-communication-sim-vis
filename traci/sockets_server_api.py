@@ -14,14 +14,8 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 
         this_car_ID = self.data.decode("utf-8")
 
-        for i in range(10):
-            carData = messaging.exampleCarData
-            carData['id'] = this_car_ID
-            messageEncoded = messaging.encodeMessage(carData, messaging.messageType.updateCarInfo)
-            self.wfile.write(bytes(messageEncoded, "utf-8"))
-            self.data = self.rfile.readline().strip().decode("utf-8")
-            print(f"    {this_car_ID} wrote: {self.data}")
-            time.sleep(1)
+        # handle connection. self is passed as first argument
+        self.socket_connection_handler(this_car_ID)
         
         messageEncoded = messaging.encodeMessage({"data": "close connection"}, messaging.messageType.closeConnection)
         self.wfile.write(bytes(messageEncoded, "utf-8"))
@@ -35,11 +29,14 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 # holds the server and the server thread objects
 class Server():
     # returns the server thread
-    def __init__(self, host, port):
+    def __init__(self, host, port, socket_connection_handler):
         self.ip = host
 
         # override socket connection on address if it is busy
         ThreadedTCPServer.allow_reuse_address = True
+
+        # assign handler function
+        ThreadedTCPRequestHandler.socket_connection_handler = socket_connection_handler
 
         self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
 

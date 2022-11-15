@@ -17,9 +17,9 @@ def client(ip, port):
 
         try:
             # identifies itself
-            pod_name = os.getenv('POD_NAME')
-            send_message(sock, pod_name)
-            print(f"sent: {pod_name}")
+            car_id = os.getenv('CAR_ID')
+            send_message(sock, car_id)
+            print(f"sent: {car_id}")
 
             # awaits for data and responds
             while True:
