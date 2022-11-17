@@ -1,7 +1,12 @@
 import threading
 import socketserver
 import time
+from logger import get_logger
+import env
 from car_communication import messaging
+
+
+logger = get_logger(env.logger_name)
 
 class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 
@@ -9,8 +14,8 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
         # self.rfile is a file-like object created by the handler;
         # we can now use e.g. readline() instead of raw recv() calls
         self.data = self.rfile.readline().strip()
-        print(f"{self.client_address[0]} wrote:")
-        print(self.data.decode("utf-8"))
+        logger.debug(f"{self.client_address[0]} wrote:")
+        logger.debug(self.data.decode("utf-8"))
 
         this_car_ID = self.data.decode("utf-8")
 
@@ -19,7 +24,7 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
         
         messageEncoded = messaging.encodeMessage({"data": "close connection"}, messaging.messageType.closeConnection)
         self.wfile.write(bytes(messageEncoded, "utf-8"))
-        print(f"closed connection with {this_car_ID}")
+        logger.debug(f"closed connection with {this_car_ID}")
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -50,13 +55,13 @@ class Server():
 
     # starts the server thread
     def start(self):
-        print("sockets server starting")
+        logger.info("sockets server starting")
         self.server_thread.start()
 
 
     # stops the server (thread closes automatically)
     def stop(self):
-        print("sockets server stopping")
+        logger.info("sockets server stopping")
         self.server.shutdown()
         self.server.server_close()
 
@@ -75,7 +80,7 @@ if __name__ == "__main__":
     # Exit the server thread when the main thread terminates
     server_thread.daemon = True
     server_thread.start()
-    print("Server loop running in thread:", server_thread.name)
+    logger.info("Server loop running in thread:", server_thread.name)
 
     server.shutdown()
     server.server_close()

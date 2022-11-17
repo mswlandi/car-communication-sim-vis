@@ -35,7 +35,7 @@ def create_pod(
     pod_body = V1Pod(metadata=metadata, spec=pod_spec, kind='Pod', api_version='v1')
     pod = k8sapi.create_namespaced_pod(namespace=namespace, body=pod_body)
 
-    print(f'Created pod {name} with image {image}:{tag} on node {node_name}')
+    # print(f'Created pod {name} with image {image}:{tag} on node {node_name}')
 
     return pod
 
