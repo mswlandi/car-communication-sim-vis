@@ -1,3 +1,6 @@
 docker-registry/storage/*
 .env
 __pycache__/
+
+# used to locally track progress on commits
+done.md

@@ -75,6 +75,13 @@ def delete_namespace_pods(namespace, destroy_namespace=False, prefix=""):
                 k8sapi.delete_namespaced_pod(name=pod_name, namespace=namespace)
 
 
+def delete_pod(name, namespace):
+    '''deletes a specific pod, given its name and namespace'''
+    global k8sapi
+
+    k8sapi.delete_namespaced_pod(name, namespace)
+
+
 def load_api():
     global k8sapi
 
