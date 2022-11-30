@@ -4,13 +4,28 @@ import select
 import sys
 import errno
 import messaging
+import paho.mqtt.client as mqtt
+
+
+def on_connect(client, userdata, flags, rc):
+    print(f'Connected to MQTT server with result code {rc}')
+
+
+mqtt_host_ip = "emqx.default.svc.cluster.local"
+mqtt_host_port = 1883
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.connect(mqtt_host_ip, mqtt_host_port, 60)
 
 def send_message(sock, message):
     '''sends message in bytes and with a trailing new line'''
     sock.sendall(bytes(f"{message}\n", 'utf-8'))
 
 
-def client(ip, port):
+def CC_function(ip, port):
+    global client
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((ip, port))
         sock.setblocking(0)
@@ -27,6 +42,7 @@ def client(ip, port):
                 if ready[0]:
                     received_message = str(sock.recv(4096), 'utf-8')
                     if received_message != "":
+                        # deal with the sockets message and then send MQTT message accordingly
                         decoded_message = messaging.decodeMessage(received_message)
                         if decoded_message["type"] == messaging.messageType.closeConnection:
                             print("received a close command. closing socket connection")
@@ -43,6 +59,17 @@ def client(ip, port):
                             print(f"    rotateY: {decoded_message['rotateY']}")
                             print(f"    rotateZ: {decoded_message['rotateZ']}")
                             send_message(sock, "received car data")
+
+                            # assemble MQTT message from sockets data
+                            carInfo = messaging.exampleCarData
+                            carInfo['id'] = decoded_message['id']
+                            carInfo['LngLat'] = decoded_message['LngLat']
+                            carInfo['altitude'] = decoded_message['altitude']
+                            carInfo['rotateX'] = decoded_message['rotateX']
+                            carInfo['rotateY'] = decoded_message['rotateY']
+                            carInfo['rotateZ'] = decoded_message['rotateZ']
+                            messageEncoded = messaging.encodeMessage(carInfo)
+                            client.publish('carInfo/update', payload=messageEncoded, qos=1, retain=False)
         
         except IOError as e:
             if e.errno == errno.EPIPE:
@@ -56,4 +83,4 @@ if __name__ == "__main__":
     SRV = os.getenv('SERVER_ADDRESS')
     PORT = int(os.getenv('SERVER_PORT'))
 
-    client(SRV, PORT)
+    CC_function(SRV, PORT)

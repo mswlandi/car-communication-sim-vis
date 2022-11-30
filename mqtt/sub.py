@@ -13,9 +13,7 @@ def on_message(client, userdata, msg):
     message = messaging.decodeMessage(msg.payload)
     print(f'{message["timestamp"]} {message["type"]}')
     if (msg.topic == "carInfo/update"):
-        print(f'    position     {message["position"]}')
-        print(f'    speed        {message["speed"]}')
-        print(f'    acceleration {message["acceleration"]}')
+        print(f'    LngLat     {message["LngLat"]}')
 
 
 mqtt_host_ip = getenv('clusterIP')

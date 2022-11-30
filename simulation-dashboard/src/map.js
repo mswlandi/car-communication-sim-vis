@@ -67,7 +67,7 @@ function loadGLTFModel(scene, center, carData) {
 export default function Map(props) {
     const mapContainer = useRef(null);
     const [carData2] = useState({
-        id: "second_car",
+        id: "second_car", // test car 2
         LngLat: [9.106607, 48.744746],
         altitude: 0,
         rotateX: 0,
@@ -109,40 +109,44 @@ export default function Map(props) {
             return false;
         }
 
+        function updateState(carData, carIndexInList) {
+            setCarDataList((oldList => {
+                const updatedCarDataList = [...oldList];
+    
+                if (carIndexInList === -1) {
+                    updatedCarDataList.push(carData);
+                } else {
+                    // console.log(`car data for car ID ${carData.id} updated.`);
+                    updatedCarDataList.splice(carIndexInList, 1, carData);
+                }
+    
+                return updatedCarDataList;
+            }));
+        }
+
         var carIndexInList = carDataList.findIndex((value, index, array) => {return carData.id === value.id});
         
         if (carIndexInList === -1) {
-            console.log("ID not found in car list. Adding car to the world");
-            
             // creates 3D model
             loadGLTFModel(scene, center, carData)
             .then((object) => {
-                console.log("new car model loaded");
-                    carData.obj = object;
-                });
+                console.log(`model loaded for car ${carData.id}`);
+                carData.obj = object;
+                updateState(carData, carIndexInList);
+            });
         } else {
             const position = getPositionFromLongLat(center, carData);
             
             const obj = carDataList[carIndexInList].obj;
             
-            obj.position.set(position.x, position.y, position.z);
-            obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
-            
-            carData.obj = obj;
-        }
-
-        setCarDataList((oldList => {
-            const updatedCarDataList = [...oldList];
-            
-            if (carIndexInList === -1) {
-                updatedCarDataList.push(carData);
-            } else {
-                // console.log(`car data for car ID ${carData.id} updated.`);
-                updatedCarDataList.splice(carIndexInList, 1, carData);
+            if (obj !== undefined) {
+                obj.position.set(position.x, position.y, position.z);
+                obj.rotation.set(carData.rotateX, carData.rotateY, carData.rotateZ);
+                
+                carData.obj = obj;
+                updateState(carData, carIndexInList);
             }
-
-            return updatedCarDataList;
-        }));
+        }
 
         return true;
     }
@@ -175,7 +179,7 @@ export default function Map(props) {
         // ----------- 1ST MODEL DATA ---------------------
         // transformation parameters to position, rotate and scale the 3D model onto the map
         var carData1 = {
-            id: "first_car",
+            id: "first_car", // test car 1
             LngLat: [9.106596, 48.744459],
             altitude: 0,
             rotateX: 0,
@@ -209,6 +213,7 @@ export default function Map(props) {
                 this.camera = new THREE.Camera();
                 setScene((oldScene) => {
                     this.addLights(oldScene);
+                    return oldScene;
                 });
                 this.map = map;
                 
