@@ -23,7 +23,7 @@ def send_message(sock, message):
     sock.sendall(bytes(f"{message}\n", 'utf-8'))
 
 
-def CC_function(ip, port):
+def CarCommunication(ip, port):
     global client
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -44,21 +44,22 @@ def CC_function(ip, port):
                     if received_message != "":
                         # deal with the sockets message and then send MQTT message accordingly
                         decoded_message = messaging.decodeMessage(received_message)
-                        if decoded_message["type"] == messaging.messageType.closeConnection:
+                        if decoded_message["type"] == messaging.messageType.closeConnection.value:
                             print("received a close command. closing socket connection")
                             sock.close()
+                            # client.publish('carInfo/close', payload=car_id, qos=1, retain=False)
                             return
-                        elif decoded_message["type"] == messaging.messageType.test:
+                        elif decoded_message["type"] == messaging.messageType.test.value:
                             send_message(sock, decoded_message["data"].upper())
                             print(f"Sent: {decoded_message['data'].upper()}")
-                        elif decoded_message["type"] == messaging.messageType.updateCarInfo:
+                        elif decoded_message["type"] == messaging.messageType.updateCarInfo.value:
                             print(f"update for id: {decoded_message['id']}")
                             print(f"    LngLat: {decoded_message['LngLat']}")
                             print(f"    altitude: {decoded_message['altitude']}")
                             print(f"    rotateX: {decoded_message['rotateX']}")
                             print(f"    rotateY: {decoded_message['rotateY']}")
                             print(f"    rotateZ: {decoded_message['rotateZ']}")
-                            send_message(sock, "received car data")
+                            send_message(sock, "ack")
 
                             # assemble MQTT message from sockets data
                             carInfo = messaging.exampleCarData
@@ -83,4 +84,4 @@ if __name__ == "__main__":
     SRV = os.getenv('SERVER_ADDRESS')
     PORT = int(os.getenv('SERVER_PORT'))
 
-    CC_function(SRV, PORT)
+    CarCommunication(SRV, PORT)

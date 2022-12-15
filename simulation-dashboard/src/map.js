@@ -29,14 +29,17 @@ function getPositionFromLongLat(center, carData){
 function loadGLTFModel(scene, center, carData) {
     return new Promise((resolve, reject) => {
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/');
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
         const loader = new GLTFLoader();
         loader.setDRACOLoader(dracoLoader);
 
         const position = getPositionFromLongLat(center, carData);
 
         loader.load(
-            "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/ferrari.glb",
+            // ferrari1.glb: original model, 1.7 MB
+            // ferrari2.glb: just a Parallelepiped
+            // ferrari3.glb: decimated version of original model, 0.57 MB
+            process.env.PUBLIC_URL + "/ferrari2.glb",
             (gltf) => {
                 const obj = gltf.scene;
                 obj.position.set(position.x, position.y, position.z);
@@ -80,6 +83,10 @@ export default function Map(props) {
     const { message } = useSubscription([
         'carInfo/update',
     ]);
+
+    // const { closeConnection } = useSubscription([
+    //     'carInfo/close',
+    // ]);
     
     const [lat] = useState(48.744715);
     const [lng] = useState(9.1066383);
@@ -95,6 +102,8 @@ export default function Map(props) {
         scale: centerMercator.meterInMercatorCoordinateUnits()
     });
 
+    // maps car id to whether a 3D Object is being created for it
+    const [carObjBeingCreated, setCarObjBeingCreated] = useState({});
     const [carDataList, setCarDataList] = useState([]);
     const [scene, setScene] = useState(new THREE.Scene());
 
@@ -125,16 +134,27 @@ export default function Map(props) {
         }
 
         var carIndexInList = carDataList.findIndex((value, index, array) => {return carData.id === value.id});
-        
-        if (carIndexInList === -1) {
+
+        // didn't find carData in list and obj is not being created
+        if (carIndexInList === -1 && !carObjBeingCreated[carData.id]) {
+            setCarObjBeingCreated(oldObj => {
+                oldObj[carData.id] = true;
+                return oldObj;
+            });
             // creates 3D model
             loadGLTFModel(scene, center, carData)
             .then((object) => {
                 console.log(`model loaded for car ${carData.id}`);
                 carData.obj = object;
+                carData.objIsCreating = false;
                 updateState(carData, carIndexInList);
+                setCarObjBeingCreated(oldObj => {
+                    oldObj[carData.id] = false;
+                    return oldObj;
+                });
             });
-        } else {
+        // if carData is in list (and therefore also has an obj)
+        } else if (carIndexInList !== -1) {
             const position = getPositionFromLongLat(center, carData);
             
             const obj = carDataList[carIndexInList].obj;
@@ -146,6 +166,10 @@ export default function Map(props) {
                 carData.obj = obj;
                 updateState(carData, carIndexInList);
             }
+        }
+        else {
+            // didn't perform any changes to the list
+            return false;
         }
 
         return true;
@@ -160,6 +184,16 @@ export default function Map(props) {
             }
         }
     }, [message]);
+
+    // // runs when the connection with a car is closed
+    // useEffect(() => {
+    //     if (closeConnection) {
+    //         if (closeConnection.topic === "carInfo/close") {
+    //             const carID = closeConnection.message;
+    //             console.log(`connection is supposed to be closed with ${carID}`);
+    //         }
+    //     }
+    // }, [closeConnection]);
 
     // map initialization
     useEffect(() => {

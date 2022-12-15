@@ -43,3 +43,6 @@ data:
     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
 EOF
 
+helm repo add emqx https://repos.emqx.io/charts
+helm repo update
+helm install emqx emqx/emqx --set service.type=NodePort
