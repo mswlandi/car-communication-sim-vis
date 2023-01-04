@@ -81,12 +81,9 @@ export default function Map(props) {
     const [API_KEY] = useState('cqvAKHMBJexanBFc1owH ');
 
     const { message } = useSubscription([
-        'carInfo/update',
+        'carInfo/+/update',
+        'carInfo/+/close'
     ]);
-
-    // const { closeConnection } = useSubscription([
-    //     'carInfo/close',
-    // ]);
     
     const [lat] = useState(48.744715);
     const [lng] = useState(9.1066383);
@@ -175,25 +172,84 @@ export default function Map(props) {
         return true;
     }
 
+    // destroys 3D object of car and remove its data from the list
+    function deleteCar(carID) {
+
+        // helper recursive function to remove all nested 3D objects
+        function removeObjectsWithChildren(obj) {
+            if(obj.children.length > 0){
+                for (var x = obj.children.length - 1; x>=0; x--){
+                    removeObjectsWithChildren( obj.children[x]);
+                }
+            }
+
+            if (obj.geometry) {
+                obj.geometry.dispose();
+            }
+
+            if (obj.material) {
+                if (obj.material.length) {
+                    for (let i = 0; i < obj.material.length; ++i) {
+
+                        if (obj.material[i].map) obj.material[i].map.dispose();
+                        if (obj.material[i].lightMap) obj.material[i].lightMap.dispose();
+                        if (obj.material[i].bumpMap) obj.material[i].bumpMap.dispose();
+                        if (obj.material[i].normalMap) obj.material[i].normalMap.dispose();
+                        if (obj.material[i].specularMap) obj.material[i].specularMap.dispose();
+                        if (obj.material[i].envMap) obj.material[i].envMap.dispose();
+
+                        obj.material[i].dispose()
+                    }
+                }
+                else {
+                    if (obj.material.map) obj.material.map.dispose();
+                    if (obj.material.lightMap) obj.material.lightMap.dispose();
+                    if (obj.material.bumpMap) obj.material.bumpMap.dispose();
+                    if (obj.material.normalMap) obj.material.normalMap.dispose();
+                    if (obj.material.specularMap) obj.material.specularMap.dispose();
+                    if (obj.material.envMap) obj.material.envMap.dispose();
+
+                    obj.material.dispose();
+                }
+            }
+
+            obj.removeFromParent();
+
+            return true;
+        }
+        
+        var carIndexInList = carDataList.findIndex((value, index, array) => {return carID === value.id});
+
+        setCarDataList((oldList => {
+            const updatedCarDataList = [...oldList];
+
+            if (carIndexInList === -1) {
+                console.log(`tried removing car that doesn't exist: ${carID}`);
+            } else {
+                console.log(`destroyed obj for car ${carID}`);
+                removeObjectsWithChildren(carDataList[carIndexInList].obj);
+                updatedCarDataList.splice(carIndexInList, 1);
+            }
+
+            return updatedCarDataList;
+        }));
+
+    }
+
     // runs on message updates
     useEffect(() => {
         if (message) {
-            if (message.topic === "carInfo/update") {
+            if (message.topic.endsWith("/update")) {
                 const carData = JSON.parse(message.message);
                 updateCarData(carData);
             }
+            else if (message.topic.endsWith("/close")) {
+                const carID = message.topic.split('/')[1];
+                console.log(`connection with ${carID} closed`);
+                deleteCar(carID);
+            }
         }
     }, [message]);
-
-    // // runs when the connection with a car is closed
-    // useEffect(() => {
-    //     if (closeConnection) {
-    //         if (closeConnection.topic === "carInfo/close") {
-    //             const carID = closeConnection.message;
-    //             console.log(`connection is supposed to be closed with ${carID}`);
-    //         }
-    //     }
-    // }, [closeConnection]);
 
     // map initialization
     useEffect(() => {

@@ -13,7 +13,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     message = messaging.decodeMessage(msg.payload)
     print(f'{message["timestamp"]} {messaging.messageType(message["type"])}')
-    if (msg.topic == "carInfo/update"):
+    if (msg.topic.endswith("/update")):
         print(f'    ID     {message["id"]}')
         print(f'    LngLat     {message["LngLat"]}')
     if (msg.topic.endswith("/close")):
