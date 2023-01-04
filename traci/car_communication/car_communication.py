@@ -1,7 +1,6 @@
 import os
 import socket
 import select
-import sys
 import errno
 import messaging
 import paho.mqtt.client as mqtt
@@ -14,9 +13,11 @@ def on_connect(client, userdata, flags, rc):
 mqtt_host_ip = "emqx.default.svc.cluster.local"
 mqtt_host_port = 1883
 
-client = mqtt.Client()
+car_id = os.getenv('CAR_ID')
+client = mqtt.Client(client_id = car_id)
 client.on_connect = on_connect
 client.connect(mqtt_host_ip, mqtt_host_port, 60)
+client.loop_start()
 
 def send_message(sock, message):
     '''sends message in bytes and with a trailing new line'''
@@ -25,6 +26,7 @@ def send_message(sock, message):
 
 def CarCommunication(ip, port):
     global client
+    global car_id
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((ip, port))
@@ -32,7 +34,6 @@ def CarCommunication(ip, port):
 
         try:
             # identifies itself
-            car_id = os.getenv('CAR_ID')
             send_message(sock, car_id)
             print(f"sent: {car_id}")
 
@@ -45,9 +46,12 @@ def CarCommunication(ip, port):
                         # deal with the sockets message and then send MQTT message accordingly
                         decoded_message = messaging.decodeMessage(received_message)
                         if decoded_message["type"] == messaging.messageType.closeConnection.value:
-                            print("received a close command. closing socket connection")
+                            print(f"received a close command. this car: {car_id}")
                             sock.close()
-                            # client.publish('carInfo/close', payload=car_id, qos=1, retain=False)
+                            messageEncoded = messaging.encodeMessage(car_id, messaging.messageType.closeConnection)
+                            client.publish(f'carInfo/{car_id}/close', payload=messageEncoded, qos=1, retain=False)
+                            client.disconnect()
+                            client.loop_stop()
                             return
                         elif decoded_message["type"] == messaging.messageType.test.value:
                             send_message(sock, decoded_message["data"].upper())
@@ -70,7 +74,7 @@ def CarCommunication(ip, port):
                             carInfo['rotateY'] = decoded_message['rotateY']
                             carInfo['rotateZ'] = decoded_message['rotateZ']
                             messageEncoded = messaging.encodeMessage(carInfo)
-                            client.publish('carInfo/update', payload=messageEncoded, qos=1, retain=False)
+                            client.publish(f'carInfo/{car_id}/update', payload=messageEncoded, qos=1, retain=False)
         
         except IOError as e:
             if e.errno == errno.EPIPE:
@@ -85,3 +89,4 @@ if __name__ == "__main__":
     PORT = int(os.getenv('SERVER_PORT'))
 
     CarCommunication(SRV, PORT)
+    print("closing the program")

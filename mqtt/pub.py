@@ -54,7 +54,7 @@ for i in range(100):
     carInfo["LngLat"] = calcNewPosition(carInfo["LngLat"], destination, speed)
     messageEncoded = messaging.encodeMessage(carInfo)
 
-    client.publish('carInfo/update', payload=messageEncoded, qos=1, retain=False)
+    client.publish(f'carInfo/{carInfo["id"]}/update', payload=messageEncoded, qos=1, retain=False)
     print(f'sent carInfo update to carInfo/update')
 
     print(f"{carInfo['LngLat'][0]},{carInfo['LngLat'][1]}")

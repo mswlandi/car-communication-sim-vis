@@ -5,16 +5,19 @@ from os import getenv
 # The callback function of connection
 def on_connect(client, userdata, flags, rc):
     print(f'Connected with result code {rc}')
-    client.subscribe("carInfo/update")
+    client.subscribe("carInfo/+/update")
+    client.subscribe("carInfo/+/close")
 
 
 # The callback function for received message
 def on_message(client, userdata, msg):
     message = messaging.decodeMessage(msg.payload)
-    print(f'{message["timestamp"]} {message["type"]}')
+    print(f'{message["timestamp"]} {messaging.messageType(message["type"])}')
     if (msg.topic == "carInfo/update"):
         print(f'    ID     {message["id"]}')
         print(f'    LngLat     {message["LngLat"]}')
+    if (msg.topic.endswith("/close")):
+        print(f'    ID     {message["id"]}')
 
 
 mqtt_host_ip = getenv('clusterIP')

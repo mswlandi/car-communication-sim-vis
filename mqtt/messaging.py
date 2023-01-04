@@ -1,6 +1,8 @@
 import jsonpickle
 from datetime import datetime
 from math import pi
+from enum import Enum, auto
+import json
 
 class CarInfo():
     def __init__(self, position, speed, acceleration):
@@ -16,6 +18,11 @@ exampleCarData = {
     "rotateY": 5.5 * pi / 8,
     "rotateZ": 0
 }
+
+class messageType(Enum):
+    updateCarInfo = auto() # send new car data
+    closeConnection = auto() # last message before closing socket connection
+    test = auto() # test the socket connection
 
 class Message():
     def __init__(self, type, data):
@@ -36,9 +43,17 @@ class Message():
         self.timestamp = datetime.timestamp(datetime.now())
 
 def encodeMessage(message):
-    message["type"] = "updateCarInfo"
+    message["type"] = messageType.updateCarInfo
     message["timestamp"] = datetime.timestamp(datetime.now())
     return jsonpickle.encode(message)
 
 def decodeMessage(message):
-    return jsonpickle.decode(message)
+    if message == None or message == "":
+        return None
+    
+    try:
+        return jsonpickle.decode(message)
+    except json.decoder.JSONDecodeError as e:
+        print("decode error, exiting. message:")
+        print(message)
+        exit()

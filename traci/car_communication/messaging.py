@@ -34,9 +34,19 @@ def encodeMessage(message, type=messageType.updateCarInfo):
         if "type" == messageType.closeConnection: last message before closing socket connection
             anything, contents are ignored
     '''
-    message["type"] = type.value
-    message["timestamp"] = datetime.timestamp(datetime.now())
-    return jsonpickle.encode(message)
+    msg = {}
+    # if message is closeConnection, has to create a new dictionary to send
+    if type == messageType.closeConnection:
+        msg["type"] = type.value
+        msg["timestamp"] = datetime.timestamp(datetime.now())
+        msg["id"] = message
+    # else, message is already a dictionary and use it as basis for message
+    else:
+        msg = message
+        msg["type"] = type.value
+        msg["timestamp"] = datetime.timestamp(datetime.now())
+    
+    return jsonpickle.encode(msg)
 
 def decodeMessage(message):
     return jsonpickle.decode(message)
