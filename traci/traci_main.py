@@ -36,6 +36,7 @@ import traci
 cars_info = {}
 stop_all_sockets_connections = threading.Event()
 logger = get_logger(env.logger_name)
+step_length = 0.2
 
 # ----- functions definition -----
 def get_current_time():
@@ -135,7 +136,7 @@ def create_or_update_car_info(vehicle):
     car_info["id"] = vehicle['id']
     car_info["LngLat"] = vehicle['position']
     car_info["rotateX"] = 0
-    car_info["rotateY"] = float(vehicle['angle']) * math.pi / 180
+    car_info["rotateY"] = math.pi * 2 - (float(vehicle['angle']) * math.pi / 180)
     car_info["rotateZ"] = 0
     car_info['wasUpdated'].set()
 
@@ -149,12 +150,13 @@ if __name__ == '__main__':
     sumoBinary = "/home/marcos/Proj/sumo/bin/sumo" # -gui
     sumoCmd = [sumoBinary,
         "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat/osm.sumocfg",
-        "--precision.geo", "7"]
+        "--precision.geo", "7",
+        "--step-length", f"{step_length}"]
 
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"
 
-    pod_limit = 3
+    pod_limit = 5
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -173,7 +175,7 @@ if __name__ == '__main__':
             # sketchy hack hehe
             os.system(f"kubectl apply -f kind_localhost_fix.yaml --namespace={env.k8sapi_namespace}")
 
-    for step in range(400):
+    for step in range(int(step_length * 8000)):
         traci.simulationStep()
 
         logger.debug(f"iteration {step}:")
@@ -206,7 +208,7 @@ if __name__ == '__main__':
         for car_id in set(cars_info) - set([vehicle['id'] for vehicle in vehicle_list]):
             cars_info[car_id]["isToBeDeleted"].set()
 
-        time.sleep(0.05)
+        time.sleep(step_length)
     
     # debugging sockets server
     # time.sleep(50)
