@@ -1,4 +1,4 @@
-# Docker Image Catalog and Runner
+# Car Communication Simulation and Visualisation
 
 ## setup
 
@@ -11,7 +11,7 @@
   - create a bucket named `images`
 - run `bash ./kind-registry.sh` to run the kubernetes cluster and docker registry
 
-- run `cd webapp` and `bash ./run.sh` to run the webapp, which will be available on `http://localhost:5000/`
+- run `cd image-catalog/webapp` and `bash ./run.sh` to run the webapp, which will be available on `http://localhost:5000/`
 
 ## monitoring
 
@@ -30,7 +30,7 @@
   ```
   and visit `localhost:9090`
 
-- access the grafana webserver by running `bash ./grafana-access.sh` and accessing the provided URL.
+- access the grafana webserver by running `bash monitoring/grafana-access.sh` and accessing the provided URL.
 - import the dashboards from `monitoring/grafana/cluster.json` and `monitoring/grafana/pod.json`
 - to save a dashboard after making changes, click on the share button, go to the export tab, turn on "Export for sharing externally", then "View JSON".
 

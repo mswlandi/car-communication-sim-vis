@@ -13,7 +13,7 @@ should_stop_loop = False
 def signal_handler(sig, frame):
     ''''SIGINT (CTRL-C) handler'''
     global should_stop_loop
-    print("ctrl-c pressed, stopping...")
+    print("\nctrl-c pressed, stopping...")
     should_stop_loop = True
 
 

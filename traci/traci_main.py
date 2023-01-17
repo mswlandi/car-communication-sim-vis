@@ -156,7 +156,7 @@ if __name__ == '__main__':
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"
 
-    pod_limit = 5
+    pod_limit = 10
 
     signal.signal(signal.SIGINT, signal_handler)
 
