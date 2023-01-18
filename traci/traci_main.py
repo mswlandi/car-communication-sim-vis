@@ -36,7 +36,7 @@ import traci
 cars_info = {}
 stop_all_sockets_connections = threading.Event()
 logger = get_logger(env.logger_name)
-step_length = 0.2
+step_length = 0.05
 
 # ----- functions definition -----
 def get_current_time():
@@ -149,14 +149,15 @@ def create_or_update_car_info(vehicle):
 if __name__ == '__main__':
     sumoBinary = "/home/marcos/Proj/sumo/bin/sumo" # -gui
     sumoCmd = [sumoBinary,
-        "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat/osm.sumocfg",
+        "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat_dense/osm.sumocfg",
+        # "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat/osm.sumocfg",
         "--precision.geo", "7",
         "--step-length", f"{step_length}"]
 
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"
 
-    pod_limit = 10
+    pod_limit = 3
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -172,10 +173,10 @@ if __name__ == '__main__':
     if env.running_kind:
         created = k8sapi.create_namespace_if_inexistent(env.k8sapi_namespace)
         if created:
-            # sketchy hack hehe
+            # sketchy hack, remove if not using kind
             os.system(f"kubectl apply -f kind_localhost_fix.yaml --namespace={env.k8sapi_namespace}")
 
-    for step in range(int(step_length * 8000)):
+    for step in range(int(1600 / step_length)):
         traci.simulationStep()
 
         logger.debug(f"iteration {step}:")

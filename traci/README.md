@@ -1,5 +1,5 @@
-TraCI is the API to launch and control SUMO.
-car_communication/ has a car communication docker image test
-traci_main.py uses sockets_server_api.py to (on the future) launch car_communication pods and be a socket server to send information to the CCI pods.
+TraCI is the API used to launch and control SUMO.
+car_communication/ has the car communication docker image
+traci_main.py uses sockets_server_api.py to launch car_communication pods and be a socket server to send information to the CCI pods.
 
-if running the car_communication images on kind, you must run `kubectl apply -f kind_localhost_fix.yaml` so that the pods have access to the socket server on the same host
+to run, with sumo installed, in `traci_main.py`, adjust the variables `sumoBinary`, `sumoCmd` and `pod_limit`, then run `python3 traci_main.py`.

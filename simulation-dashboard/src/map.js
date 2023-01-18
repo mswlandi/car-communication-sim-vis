@@ -39,7 +39,7 @@ function loadGLTFModel(scene, center, carData) {
             // ferrari1.glb: original model, 1.7 MB
             // ferrari2.glb: just a Parallelepiped
             // ferrari3.glb: decimated version of original model, 0.57 MB
-            process.env.PUBLIC_URL + "/ferrari2.glb",
+            process.env.PUBLIC_URL + "/ferrari3.glb",
             (gltf) => {
                 const obj = gltf.scene;
                 obj.position.set(position.x, position.y, position.z);
@@ -307,8 +307,8 @@ export default function Map(props) {
                 });
                 this.map = map;
                 
-                updateCarData(carData1);
-                updateCarData(carData2);
+                // updateCarData(carData1);
+                // updateCarData(carData2);
 
                 // use the MapLibre GL JS map canvas for three.js
                 this.renderer = new THREE.WebGLRenderer({
@@ -359,9 +359,9 @@ export default function Map(props) {
     <div className="map-wrap">
         <div ref={mapContainer}
             className="map"/>
-        <button onClick={() => animateCar()}>animate</button>
-        <button onClick={() => console.log(carDataList)}>print</button>
-        <div>{`topic:${message ? message.topic : 'empty'} - message: ${message ? message.message : 'empty'}`}</div>
+        {/* <button onClick={() => animateCar()}>animate</button> */}
+        {/* <button onClick={() => console.log(carDataList)}>print</button> */}
+        {/* <div>{`topic:${message ? message.topic : 'empty'} - message: ${message ? message.message : 'empty'}`}</div> */}
     </div>
     );
 }
