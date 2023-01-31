@@ -26,7 +26,7 @@ it is possible to monitor the resource usage of the cluster using Prometheus and
 
 ### MQTT
 As intermediary for the cars' communication, an MQTT broker and protocol are used.
-To set it up, take a look at [mqtt/README.md](mqtt/README.md).
+It is already set up with `kind-registry.sh` but to see how to use it, take a look at [mqtt/README.md](mqtt/README.md).
 
 ### Traci
 The actual car traffic simulation is run by sumo, via the Traci API.

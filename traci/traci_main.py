@@ -6,6 +6,7 @@ import signal
 import sys
 import threading
 import math
+import argparse
 from logger import get_logger
 from car_communication import messaging
 
@@ -22,7 +23,7 @@ else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 import traci
 
-# ----- global variables -----
+# ----- global variables (program states used in main and other functions) -----
 
 # maps vehicle IDs to:
 #   "id": str,
@@ -36,7 +37,6 @@ import traci
 cars_info = {}
 stop_all_sockets_connections = threading.Event()
 logger = get_logger(env.logger_name)
-step_length = 0.05
 
 # ----- functions definition -----
 def get_current_time():
@@ -147,17 +147,31 @@ def create_or_update_car_info(vehicle):
 
 # ----- main part -----
 if __name__ == '__main__':
-    sumoBinary = "/home/marcos/Proj/sumo/bin/sumo" # -gui
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--step_length", dest="step_length", help="step interval of the SUMO simulation, in seconds", default=0.05)
+    parser.add_argument("--pod_limit", dest="pod_limit", help="Maximum number of car communication pods that are to be launched", default=3)
+    parser.add_argument("--vprefix", dest="vehicleprefix", help="The prefix that all car names share. if a car doesnt have it, throws an exception", default="veh")
+    parser.add_argument("--sumo_binary", dest="sumo_binary", help="The path to the sumo binary, including the actual binary name. default is just sumo, in that case you have to have installed sumo", default="sumo")
+    parser.add_argument("--use_gui", dest="use_gui", help="Use sumo-gui instead of sumo", action='store_true')
+    parser.add_argument("--scenario_name", dest="scenario_name", help="The scenario type/name to run. ('crash' supposes a carflow in the route file, and 'carflow' as vprefix)", default="normal", choices=['normal', 'crash'])
+    parser.add_argument("--scenario_path", dest="scenario_path", help="The path to the .sumofcg to run.", default="scenario_examples/normal/osm.sumocfg")
+    parser.add_argument("--crash_time", dest="crash_time", help="The desired time when the crash is supposed to happen. only used when scenario=crash.", default=20)
+    args = parser.parse_args()
+    
+    env.car_pods_prefix = args.vehicleprefix
+    step_length = args.step_length
+    pod_limit = args.pod_limit
+    scenario_name = args.scenario_name
+    crash_time = args.crash_time
+
+    sumoBinary = args.sumo_binary + "-gui" if args.use_gui else args.sumo_binary
     sumoCmd = [sumoBinary,
-        "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat_dense/osm.sumocfg",
-        # "-c", "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat/osm.sumocfg",
+        "-c", args.scenario_path,
         "--precision.geo", "7",
         "--step-length", f"{step_length}"]
 
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"
-
-    pod_limit = 3
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -183,6 +197,10 @@ if __name__ == '__main__':
         vehicle_list = getMapOfVehicles()
         for vehicle in vehicle_list:
             if vehicle['id'] not in cars_info:
+                if not vehicle['id'].startswith(env.car_pods_prefix):
+                    cleanup()
+                    raise Exception(f"Car name ({vehicle['id']}) without the right prefix ({env.car_pods_prefix}) entered the simulation")
+                
                 if len(cars_info) < pod_limit:
                     # creates car info
                     new_car_info = create_or_update_car_info(vehicle)
@@ -204,6 +222,11 @@ if __name__ == '__main__':
             else:
                 # updates car info
                 create_or_update_car_info(vehicle)
+            
+            # forced crash scenario
+            if scenario_name == "crash":
+                if vehicle['id'] == "carflow.0" and step * step_length > crash_time:
+                    traci.vehicle.setSpeed(vehicle['id'], 0)
             
         # goes through car_info objects that no longer exist in the simulation
         for car_id in set(cars_info) - set([vehicle['id'] for vehicle in vehicle_list]):
