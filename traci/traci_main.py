@@ -155,7 +155,7 @@ if __name__ == '__main__':
     parser.add_argument("--use_gui", dest="use_gui", help="Use sumo-gui instead of sumo", action='store_true')
     parser.add_argument("--scenario_name", dest="scenario_name", help="The scenario type/name to run. ('crash' supposes a carflow in the route file, and 'carflow' as vprefix)", default="normal", choices=['normal', 'crash'])
     parser.add_argument("--scenario_path", dest="scenario_path", help="The path to the .sumofcg to run.", default="scenario_examples/normal/osm.sumocfg")
-    parser.add_argument("--crash_time", dest="crash_time", help="The desired time when the crash is supposed to happen. only used when scenario=crash.", default=20)
+    parser.add_argument("--crash_time", dest="crash_time", help="The desired time when the crash is supposed to happen. only used when scenario=crash.", default=40)
     args = parser.parse_args()
     
     env.car_pods_prefix = args.vehicleprefix
@@ -225,7 +225,10 @@ if __name__ == '__main__':
             
             # forced crash scenario
             if scenario_name == "crash":
-                if vehicle['id'] == "carflow.0" and step * step_length > crash_time:
+                if vehicle['id'] == "carflow.1" and step * step_length > crash_time:
+                    # set speed mode with a bitset that disregards maximum deceleration and safe speeds
+                    traci.vehicle.setSpeedMode(vehicle['id'], 0b011010)
+                    # makes the first car in the line brake suddenly as fast as possible
                     traci.vehicle.setSpeed(vehicle['id'], 0)
             
         # goes through car_info objects that no longer exist in the simulation

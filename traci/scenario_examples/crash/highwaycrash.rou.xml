@@ -1,5 +1,5 @@
 <routes>
     <!--<vType id="car" type="passenger" length="5" accel="3.5" decel="2.2" sigma="1.0"/>-->
-    <vType id="car" type="passenger" sigma="0.5" maxSpeed="38.888" speedFactor="0.9" speedDev="0.2"/>
+    <vType id="car" type="passenger" sigma="0.5" maxSpeed="55.55" speedFactor="0.9" speedDev="0.2"/>
     <flow id="carflow" type="car" beg="0" end="0" number="10" from="E0" to="E0"/>
 </routes>
