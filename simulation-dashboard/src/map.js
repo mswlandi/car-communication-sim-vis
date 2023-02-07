@@ -355,10 +355,24 @@ export default function Map(props) {
         updateCarData(newCarData);
     };
 
+    const teleportLngLat = React.useRef();
+    const handleTeleport = (event) => {
+        event.preventDefault();
+
+        const LngLat = teleportLngLat.current.value;
+        const NewCenter = LngLat.split(", ").map((value) => {return parseFloat(value);});
+        props.map.current.jumpTo({center: NewCenter});
+    };
+
     return (
     <div className="map-wrap">
         <div ref={mapContainer}
             className="map"/>
+        <form onSubmit={handleTeleport}>
+            <div>Teleport to:</div>
+            <input id="LngLat" type="text" ref={teleportLngLat} placeholder="Longitude, Latitude"></input>
+            <button type="submit">Teleport</button>
+        </form>
         {/* <button onClick={() => animateCar()}>animate</button> */}
         {/* <button onClick={() => console.log(carDataList)}>print</button> */}
         {/* <div>{`topic:${message ? message.topic : 'empty'} - message: ${message ? message.message : 'empty'}`}</div> */}

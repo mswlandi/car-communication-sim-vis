@@ -153,16 +153,16 @@ if __name__ == '__main__':
     parser.add_argument("--vprefix", dest="vehicleprefix", help="The prefix that all car names share. if a car doesnt have it, throws an exception", default="veh")
     parser.add_argument("--sumo_binary", dest="sumo_binary", help="The path to the sumo binary, including the actual binary name. default is just sumo, in that case you have to have installed sumo", default="sumo")
     parser.add_argument("--use_gui", dest="use_gui", help="Use sumo-gui instead of sumo", action='store_true')
-    parser.add_argument("--scenario_name", dest="scenario_name", help="The scenario type/name to run. ('crash' supposes a carflow in the route file, and 'carflow' as vprefix)", default="normal", choices=['normal', 'crash'])
+    parser.add_argument("--scenario_name", dest="scenario_name", help="The scenario type/name to run. ('crash' supposes a carflow in the route file, and 'carflow' as vprefix)", default="normal", choices=['normal', 'crash', 'autobahn_crash'])
     parser.add_argument("--scenario_path", dest="scenario_path", help="The path to the .sumofcg to run.", default="scenario_examples/normal/osm.sumocfg")
     parser.add_argument("--crash_time", dest="crash_time", help="The desired time when the crash is supposed to happen. only used when scenario=crash.", default=40)
     args = parser.parse_args()
     
     env.car_pods_prefix = args.vehicleprefix
     step_length = args.step_length
-    pod_limit = args.pod_limit
+    pod_limit = int(args.pod_limit)
     scenario_name = args.scenario_name
-    crash_time = args.crash_time
+    crash_time = float(args.crash_time)
 
     sumoBinary = args.sumo_binary + "-gui" if args.use_gui else args.sumo_binary
     sumoCmd = [sumoBinary,
@@ -172,6 +172,8 @@ if __name__ == '__main__':
 
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"
+
+    coordinates_printed = False
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -196,6 +198,10 @@ if __name__ == '__main__':
         logger.debug(f"iteration {step}:")
         vehicle_list = getMapOfVehicles()
         for vehicle in vehicle_list:
+            if not coordinates_printed:
+                logger.info(f"first car inserted in coordinates {vehicle['position'][0]}, {vehicle['position'][1]}")
+                coordinates_printed = True
+            
             if vehicle['id'] not in cars_info:
                 if not vehicle['id'].startswith(env.car_pods_prefix):
                     cleanup()
@@ -225,10 +231,16 @@ if __name__ == '__main__':
             
             # forced crash scenario
             if scenario_name == "crash":
-                if vehicle['id'] == "carflow.1" and step * step_length > crash_time:
+                if vehicle['id'] == "carflow.2" and step * step_length > crash_time:
                     # set speed mode with a bitset that disregards maximum deceleration and safe speeds
                     traci.vehicle.setSpeedMode(vehicle['id'], 0b011010)
                     # makes the first car in the line brake suddenly as fast as possible
+                    traci.vehicle.setSpeed(vehicle['id'], 0)
+            
+            if scenario_name == "autobahn_crash":
+                if vehicle['id'].startswith("carflow-barrier") and step * step_length > crash_time:
+                    # change to 3 cars
+                    traci.vehicle.setSpeedMode(vehicle['id'], 0b011010)
                     traci.vehicle.setSpeed(vehicle['id'], 0)
             
         # goes through car_info objects that no longer exist in the simulation

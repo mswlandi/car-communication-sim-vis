@@ -1,0 +1,10 @@
+<routes>
+    <!--<vType id="car" type="passenger" length="5" accel="3.5" decel="2.2" sigma="1.0"/>-->
+    <vType id="car" type="passenger" sigma="0.5" maxSpeed="50" speedFactor="0.9" speedDev="0.2"/>
+    <flow id="carflow-lane0" type="car" departLane="0" beg="0" end="0" number="15" from="e0" to="e1"/>
+    <flow id="carflow-lane1" type="car" departLane="1" beg="0" end="0" number="15" from="e0" to="e1"/>
+    <flow id="carflow-lane2" type="car" departLane="2" beg="0" end="0" number="15" from="e0" to="e1"/>
+    <trip id="carflow-barrier0" type="car" departLane="0" insertionChecks="none" departPos="1122.00" depart="40.00" from="e0" to="e0"/>
+    <trip id="carflow-barrier1" type="car" departLane="1" insertionChecks="none" departPos="1121.00" depart="40.00" from="e0" to="e0"/>
+    <trip id="carflow-barrier2" type="car" departLane="2" insertionChecks="none" departPos="1120.00" depart="40.00" from="e0" to="e0"/>
+</routes>

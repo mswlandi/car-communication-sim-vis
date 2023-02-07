@@ -21,9 +21,13 @@ Run `python3 traci_main.py` with the following optional arguments:
 - `--crash_time`: The desired time when the crash is supposed to happen. only used when scenario=crash.
   - default: 20
 
-Example with the crash example scenario and a custom build of sumo:
+Example with the crash example scenario and a custom build of sumo, using the GUI:
 
 `python3 traci_main.py --vprefix carflow --scenario_name crash --scenario_path "scenario_examples/crash/highwaycrash.sumocfg" --sumo_binary /home/marcos/Proj/sumo/bin/sumo --use_gui`
+
+Example with the autobahn crash scenario:
+
+`python3 traci_main.py --vprefix carflow --scenario_name autobahn_crash --scenario_path scenario_examples/autobahn_crash/highwaycrash.sumocfg --sumo_binary /home/marcos/Proj/sumo/bin/sumo --pod_limit 10`
 
 
 --scenario_path "/home/marcos/Proj/sumonetworks/stuttgart_vaihingen_universitat_dense/osm.sumocfg"
