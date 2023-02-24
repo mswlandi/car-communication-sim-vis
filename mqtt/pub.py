@@ -47,17 +47,23 @@ carInfo = messaging.exampleCarData
 carInfo["LngLat"] = origin
 messageEncoded = messaging.encodeMessage(carInfo)
 
-print(f"{origin[1]},{origin[0]},red,marker,\"origin\"")
-print(f"{destination[1]},{destination[0]},red,marker,\"destination\"")
+# print(f"{origin[1]},{origin[0]},red,marker,\"origin\"")
+# print(f"{destination[1]},{destination[0]},red,marker,\"destination\"")
+
+client.loop_start()
 
 for i in range(100):
     carInfo["LngLat"] = calcNewPosition(carInfo["LngLat"], destination, speed)
     messageEncoded = messaging.encodeMessage(carInfo)
 
-    client.publish(f'carInfo/{carInfo["id"]}/update', payload=messageEncoded, qos=1, retain=False)
-    print(f'sent carInfo update to carInfo/update')
+    result = client.publish(f'carInfo/{carInfo["id"]}/update', payload=messageEncoded, qos=1, retain=False)
+    
+    if result[0] == 0:
+        print(f'sent carInfo update to carInfo/{carInfo["id"]}/update')
+    else:
+        print(f'failed to send carInfo update to carInfo/{carInfo["id"]}/update')
 
     print(f"{carInfo['LngLat'][0]},{carInfo['LngLat'][1]}")
     time.sleep(0.2)
 
-client.loop_forever()
+client.loop_stop()

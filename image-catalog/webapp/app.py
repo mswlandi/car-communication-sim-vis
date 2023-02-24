@@ -40,7 +40,7 @@ def list():
             registry_address=registry_address,
             registry_port=registry_port)
 
-    imagelist = docker_registry.getImageList(registry_address, registry_port)
+    imagelist = docker_registry.get_image_list(registry_address, registry_port)
     return render_template('list.html', imagelist=imagelist, nodelist=k8sapi.get_node_list())
 
 if __name__ == '__main__':

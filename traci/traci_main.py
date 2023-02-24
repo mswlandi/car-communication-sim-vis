@@ -168,7 +168,11 @@ if __name__ == '__main__':
     sumoCmd = [sumoBinary,
         "-c", args.scenario_path,
         "--precision.geo", "7",
-        "--step-length", f"{step_length}"]
+        "--step-length", f"{step_length}",
+        "--collision.mingap-factor", "0",
+        "--collision.action", "warn",
+        "--collision.stoptime", "50",
+        "--step-method.ballistic", "false"]
 
     k8s_pod_image_name = "car_communication"
     k8s_pod_tag = "latest"

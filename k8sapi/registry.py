@@ -47,7 +47,7 @@ class DockerImage:
         for tag in self.tags:
             tag.fetchTagSize()
 
-def getImageList(registryIP, port):
+def get_image_list(registryIP, port):
     image_catalog = requests.get(f'http://{registryIP}:{port}/v2/_catalog')
 
     image_name_list = json.loads(image_catalog.content)['repositories']
@@ -62,5 +62,5 @@ def getImageList(registryIP, port):
     return image_list
 
 if __name__ == '__main__':
-    for image in getImageList('localhost', 5001):
+    for image in get_image_list('localhost', 5001):
         print(f'{image.name} - {image.size}')
